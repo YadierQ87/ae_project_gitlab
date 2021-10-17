@@ -23,9 +23,10 @@ class HrEmployee(models.Model):
         pass
 
     # GET /users/:user_id/projects
+    """https://gitlab.com/api/v4/groups/aleph-engineering/issues?assignee_username=Quesada87"""
     def do_get_repositories_list(self):
         username = 'Quesada87'
-        token = 'zTeQqdG9LLAGahSW5e9Y'
+        token = ''
         repos_url = 'https://github.com/YadierQ87?tab=repositories'
 
         # create a re-usable session object with the user creds in-built
