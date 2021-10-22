@@ -48,25 +48,21 @@ class GitlabConnection:
             issues = self.get_response_url(url_proj)
             if isinstance(issues, list) and len(issues) > 0:
                 return self._list_issues(issues)
-            else:
-                return dict(message='404 Project Not Found')
-        else:
-            return dict(message='500 Error')
+        return False
 
     # GET /projects/:id/issues?assignee_username=Quesada87  filter by name
     def get_issues_by_username(self, project_id="", username=""):
         if project_id == "" or username == "":
-            return dict(message='500 Error')
+            return False
         else:
             url_username = f'{self.api_url}projects/{project_id}/issues?assignee_username={username}'
             issues = self.get_response_url(url_username)
             if isinstance(issues, list) and len(issues) > 0:
                 return self._list_issues(issues)
-            else:
-                return dict(message='404 Resource Not Found')
+        return False
 
 
-connection = GitlabConnection
+connection = GitlabConnection()
 
 
 class GitlabGroup(models.Model):
@@ -107,12 +103,7 @@ class GitlabGroup(models.Model):
                          'path': proj["path"],
                          'path_with_namespace': proj["path_with_namespace"], }
                     )
-        group = super(GitlabGroup, self).create(values)
-        return group
-
-    # GET /groups/:id/projects
-    def do_actions_get_projects(self):
-        connection.get_info_by_group(self.git_id)
+        return super(GitlabGroup, self).create(values)
 
 
 class GitlabProject(models.Model):
@@ -129,6 +120,13 @@ class GitlabProject(models.Model):
     path = fields.Char()
     path_with_namespace = fields.Char()
     description = fields.Char()
+
+    # GET /projects/:id/issues
+    def do_actions_get_projects(self):
+        projects = connection.get_project_issues(self.git_id)
+        if isinstance(projects, dict):
+            # create for cycle in order to create all the issues or tasks for this project
+            pass
 
 
 class GitlabUser(models.Model):
