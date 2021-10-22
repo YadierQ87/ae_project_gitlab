@@ -2,12 +2,19 @@
 import json
 
 import requests as requests
-from odoo import models
-
-TYPE = [('gitlab', 'GitLab')]
+from odoo import fields, models
 
 
-class GitlabConnection(models.Model):
+class GitlabConfig(models.Model):
+    _name = "system.config"
+
+    name = fields.Char()
+    secret_token = fields.Char(
+        string='Secret_token',
+        required=False)
+
+
+class GitlabConnection:
 
     def __init__(self):
         self.token = 'zTeQqdG9LLAGahSW5e9Y'
