@@ -2,69 +2,10 @@
 import json
 
 import requests as requests
-from odoo import fields, models
+from odoo import fields, models, api
 
 
-class GitlabGroup(models.Model):
-    _name = "gitlab.group.profile"
-    _description = "Gitlab Group Profile Copy"
-
-    name = fields.Char("Title")
-    git_id = fields.Char()  # Example id: 1386105
-    web_url = fields.Char()
-    path = fields.Char()
-    description = fields.Char()
-    visibility = fields.Char()
-    avatar_url = fields.Char()
-    # GET /groups/:id/projects
-
-
-class GitlabProject(models.Model):
-    _name = "gitlab.project.profile"
-    _description = "Gitlab Project Profile Copy"
-
-    name = fields.Char("Title")
-    git_id = fields.Char()  # Example id: 19264544
-    ssh_url_to_repo = fields.Char()
-    http_url_to_repo = fields.Char()
-    web_url = fields.Char()
-    readme_url = fields.Char()
-    name_with_namespace = fields.Char()
-    path = fields.Char()
-    path_with_namespace = fields.Char()
-
-
-class GitlabUser(models.Model):
-    _name = "gitlab.user.profile"
-    _description = "Gitlab User Profile Copy"
-
-    git_id = fields.Char()
-    name = fields.Char()
-    username = fields.Char()
-    state = fields.Char()
-    avatar_url = fields.Char()
-    web_url = fields.Char()
-    user_id = fields.Many2one(
-        comodel_name='res.users',
-        string='Contact',
-        required=False)
-
-
-class GitlabConfig(models.Model):
-    _name = "gitlab.system.config"
-
-    name = fields.Char()
-    secret_token = fields.Char(
-        string='Secret_token',
-        required=False)
-    api_url = fields.Char(
-        string='Api_url',
-        required=False)
-
-
-class GitlabConnection(models.Model):
-    _name = "gitlab.connection.api"
-
+class GitlabConnection:
     def __init__(self):
         self.token = 'zTeQqdG9LLAGahSW5e9Y'
         self.api_url = "https://gitlab.com/api/v4/"
@@ -89,12 +30,8 @@ class GitlabConnection(models.Model):
             url_group = f'{self.api_url}groups/{group_id}'
             info_group = self.get_response_url(url_group)
             if isinstance(info_group, dict):
-                data = f'Id:{info_group["id"]} Name:{info_group["name"]}'
-                return dict(group=data)
-            else:
-                return dict(message='404 Group Not Found')
-        else:
-            return dict(message='500 Error')
+                return info_group
+        return False
 
     @staticmethod
     def _list_issues(issues):
@@ -127,3 +64,96 @@ class GitlabConnection(models.Model):
                 return self._list_issues(issues)
             else:
                 return dict(message='404 Resource Not Found')
+
+
+connection = GitlabConnection
+
+
+class GitlabGroup(models.Model):
+    _name = "gitlab.group.profile"
+    _description = "Gitlab Group Profile Copy"
+
+    name = fields.Char("Title")
+    git_name = fields.Char("Name in Gitlab")
+    git_id = fields.Char(required=True)  # Example id: 1386105
+    web_url = fields.Char()
+    path = fields.Char()
+    description = fields.Char()
+    visibility = fields.Char()
+    avatar_url = fields.Char()
+
+    @api.model
+    def create(self, values):
+        info_group = connection.get_info_by_group(values.get('git_id'))
+        if isinstance(info_group, dict):  # if the group id exist in gitlab
+            values['git_name'] = info_group['git_name']
+            values['web_url'] = info_group['web_url']
+            values['path'] = info_group['path']
+            values['description'] = info_group['description']
+            values['visibility'] = info_group['visibility']
+            values['avatar_url'] = info_group['avatar_url']
+            if len(info_group["projects"]) > 0:  # if the group has projects
+                project = self.env["gitlab.project.profile"]
+                for proj in info_group["projects"]:
+                    project.create(
+                        {'name': proj["name"],
+                         'git_id': proj["git_id"],
+                         'description': proj["description"],
+                         'name_with_namespace': proj["name_with_namespace"],
+                         'ssh_url_to_repo': proj["ssh_url_to_repo"],
+                         'http_url_to_repo': proj["http_url_to_repo"],
+                         'web_url': proj["web_url"],
+                         'readme_url': proj["readme_url"],
+                         'path': proj["path"],
+                         'path_with_namespace': proj["path_with_namespace"], }
+                    )
+        group = super(GitlabGroup, self).create(values)
+        return group
+
+    # GET /groups/:id/projects
+    def do_actions_get_projects(self):
+        connection.get_info_by_group(self.git_id)
+
+
+class GitlabProject(models.Model):
+    _name = "gitlab.project.profile"
+    _description = "Gitlab Project Profile Copy"
+
+    name = fields.Char("Title")
+    git_id = fields.Char()  # Example id: 19264544
+    ssh_url_to_repo = fields.Char()
+    http_url_to_repo = fields.Char()
+    web_url = fields.Char()
+    readme_url = fields.Char()
+    name_with_namespace = fields.Char()
+    path = fields.Char()
+    path_with_namespace = fields.Char()
+    description = fields.Char()
+
+
+class GitlabUser(models.Model):
+    _name = "gitlab.user.profile"
+    _description = "Gitlab User Profile Copy"
+
+    git_id = fields.Char()
+    name = fields.Char()
+    username = fields.Char()
+    state = fields.Char()
+    avatar_url = fields.Char()
+    web_url = fields.Char()
+    user_id = fields.Many2one(
+        comodel_name='res.users',
+        string='Contact',
+        required=False)
+
+
+class GitlabConfig(models.Model):
+    _name = "gitlab.system.config"
+
+    name = fields.Char()
+    secret_token = fields.Char(
+        string='Secret_token',
+        required=False)
+    api_url = fields.Char(
+        string='Api_url',
+        required=False)
