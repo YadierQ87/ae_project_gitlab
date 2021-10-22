@@ -6,7 +6,7 @@ from odoo import fields, models
 
 
 class GitlabConfig(models.Model):
-    _name = "system.config"
+    _name = "gitlab.system.config"
 
     name = fields.Char()
     secret_token = fields.Char(
@@ -14,7 +14,8 @@ class GitlabConfig(models.Model):
         required=False)
 
 
-class GitlabConnection:
+class GitlabConnection(models.Model):
+    _name = "gitlab.connection.api"
 
     def __init__(self):
         self.token = 'zTeQqdG9LLAGahSW5e9Y'
