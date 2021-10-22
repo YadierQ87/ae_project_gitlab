@@ -4,62 +4,29 @@ import json
 import requests as requests
 from odoo import fields, models, api
 
+_SECRET_TOKEN = 'zTeQqdG9LLAGahSW5e9Y'
+_BASE_URL = "https://gitlab.com/api/v4/"
+
+_CODE_404 = 404
+_CODE_200 = 200
+
 
 class GitlabConnection:
     def __init__(self):
-        self.token = 'zTeQqdG9LLAGahSW5e9Y'
-        self.api_url = "https://gitlab.com/api/v4/"
         self.gh_session = requests.Session()
 
     def __del__(self):
         self.gh_session.close()
 
     def get_response_url(self, url):
-        if isinstance(url, str) and self.api_url in url:
-            response_git = self.gh_session.get(url, headers={'PRIVATE-TOKEN': self.token})
-            if response_git.status_code == 404:
+        if isinstance(url, str) and _BASE_URL in url:
+            response_git = self.gh_session.get(url, headers={'PRIVATE-TOKEN': _SECRET_TOKEN})
+            if response_git.status_code == _CODE_404:
                 return False
-            elif response_git.status_code == 200:
+            elif response_git.status_code == _CODE_200:
                 return json.loads(response_git.text)
         else:
             return False
-
-    # GET /groups/:id/
-    def get_info_by_group(self, group_id=""):
-        if isinstance(group_id, str) and group_id != "":
-            url_group = f'{self.api_url}groups/{group_id}'
-            info_group = self.get_response_url(url_group)
-            if isinstance(info_group, dict):
-                return info_group
-        return False
-
-    @staticmethod
-    def _list_issues(issues):
-        list_issues = []
-        for issue in issues:
-            data = f'Id:{issue["iid"]} Name:{issue["title"]} weight:{issue["weight"]}'
-            list_issues.append({"Issue": data})
-        return list_issues
-
-    # GET /projects/:id/issues
-    def get_project_issues(self, project_id=""):
-        if isinstance(project_id, str) and project_id != "":
-            url_proj = f'{self.api_url}projects/{project_id}/issues'
-            issues = self.get_response_url(url_proj)
-            if isinstance(issues, list) and len(issues) > 0:
-                return self._list_issues(issues)
-        return False
-
-    # GET /projects/:id/issues?assignee_username=Quesada87  filter by name
-    def get_issues_by_username(self, project_id="", username=""):
-        if project_id == "" or username == "":
-            return False
-        else:
-            url_username = f'{self.api_url}projects/{project_id}/issues?assignee_username={username}'
-            issues = self.get_response_url(url_username)
-            if isinstance(issues, list) and len(issues) > 0:
-                return self._list_issues(issues)
-        return False
 
 
 connection = GitlabConnection()
@@ -78,9 +45,19 @@ class GitlabGroup(models.Model):
     visibility = fields.Char()
     avatar_url = fields.Char()
 
+    # GET /groups/:id/
+    @staticmethod
+    def get_info_by_group(group_id=""):
+        if isinstance(group_id, str) and group_id != "":
+            url_group = f'{_BASE_URL}groups/{group_id}'
+            info_group = connection.get_response_url(url_group)
+            if isinstance(info_group, dict):
+                return info_group
+        return False
+
     @api.model
     def create(self, values):
-        info_group = connection.get_info_by_group(values.get('git_id'))
+        info_group = self.get_info_by_group(values.get('git_id'))
         if isinstance(info_group, dict):  # if the group id exist in gitlab
             values['git_name'] = info_group['git_name']
             values['web_url'] = info_group['web_url']
@@ -121,12 +98,45 @@ class GitlabProject(models.Model):
     path_with_namespace = fields.Char()
     description = fields.Char()
 
+    @staticmethod
+    def _create_issues_from_list(self, issues: list):
+        task = self.env['project.task']
+        if len(issues) > 0:
+            for issue in issues:
+                # todo left to add assignees_ids , author_id and project_git_id
+                task.create({'id_gitlab': issue['id'],
+                             'iid_gitlab': issue['iid'],
+                             'name': issue['title'],
+                             'description': issue['description'],
+                             'state': issue['state'],
+                             'labels': issue['labels'],
+                             'issue_type': issue['issue_type'],
+                             'confidential': issue['confidential'],
+                             'milestone': issue['milestone'],
+                             'weight': issue['weight'],
+                             'task_status': issue['task_status'],
+                             'human_time_estimate': issue['human_time_estimate'],
+                             'human_total_time_spent': issue['human_total_time_spent'],
+                             })
+        return False
+
     # GET /projects/:id/issues
-    def do_actions_get_projects(self):
-        projects = connection.get_project_issues(self.git_id)
-        if isinstance(projects, dict):
-            # create for cycle in order to create all the issues or tasks for this project
-            pass
+    def create_issues_by_project(self):
+        if self.git_id:
+            url_proj = f'{_BASE_URL}projects/{self.git_id}/issues'
+            issues = self.get_response_url(url_proj)
+            if isinstance(issues, list):
+                self._create_issues_from_list(issues)
+        return False
+
+    # GET /projects/:id/issues?assignee_username=Quesada87  filter by name
+    def create_issues_by_username(self, username=""):
+        if self.git_id and username:
+            url_username = f'{_BASE_URL}projects/{self.git_id}/issues?assignee_username={username}'
+            issues = self.get_response_url(url_username)
+            if isinstance(issues, list):
+                self._create_issues_from_list(issues)
+        return False
 
 
 class GitlabUser(models.Model):
@@ -141,8 +151,7 @@ class GitlabUser(models.Model):
     web_url = fields.Char()
     user_id = fields.Many2one(
         comodel_name='res.users',
-        string='Contact',
-        required=False)
+        string='Contact', )
 
 
 class GitlabConfig(models.Model):

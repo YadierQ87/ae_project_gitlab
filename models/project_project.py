@@ -14,24 +14,19 @@ class Project(models.Model):
 class TaskProjects(models.Model):
     _inherit = 'project.task'
 
-    issue_gitlab = fields.Char(
-        string='Issue-Id in gitlab',
-        required=False)
+    id_gitlab = fields.Char(
+        string='Issue-id in gitlab')
+    iid_gitlab = fields.Char(
+        string='Issue-iid in gitlab')
     assignees_ids = fields.One2many(
         comodel_name='gitlab.user.profile',
-        string='Assignees',
-        required=False)
+        string='Assignees')
     author_id = fields.Many2one(
         comodel_name='gitlab.user.profile',
-        string='Author',
-        required=False)
-    gitlab_profile_id = fields.Many2one(
-        comodel_name='gitlab.user.profile',
-        string='Gitlab profile id',
-        required=False)
-    # project_id => project_id in Odoo
-    # title = > name in Odoo
-    # description = > description in Odoo
+        string='Author')
+    project_git_id = fields.Many2one(
+        comodel_name='gitlab.project.profile',
+        string='Project gitlab')
     state = fields.Selection(
         string='State',
         selection=[('opened', 'opened'),
