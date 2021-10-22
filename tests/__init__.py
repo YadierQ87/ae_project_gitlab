@@ -1,1 +1,1 @@
-from . import test_crm_social_profile
+from . import test_ae_project_gitlab
