@@ -2,8 +2,8 @@
 from odoo import fields, models
 
 
-class ResPartner(models.Model):
-    _inherit = "res.partner"
+class ResUser(models.Model):
+    _inherit = "res.users"
 
     gitlab_profile_ids = fields.One2many(
         comodel_name='gitlab.user.profile',

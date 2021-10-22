@@ -15,8 +15,8 @@ class GitlabUser(models.Model):
     state = fields.Char()
     avatar_url = fields.Char()
     web_url = fields.Char()
-    partner_id = fields.Many2one(
-        comodel_name='res.partner',
+    user_id = fields.Many2one(
+        comodel_name='res.users',
         string='Contact',
         required=False)
 
