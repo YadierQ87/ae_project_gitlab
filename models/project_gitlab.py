@@ -5,12 +5,31 @@ import requests as requests
 from odoo import fields, models
 
 
+class GitlabUser(models.Model):
+    _name = "gitlab.user.profile"
+    _description = "Gitlab User Profile Copy"
+
+    git_id = fields.Char()
+    name = fields.Char()
+    username = fields.Char()
+    state = fields.Char()
+    avatar_url = fields.Char()
+    web_url = fields.Char()
+    partner_id = fields.Many2one(
+        comodel_name='res.partner',
+        string='Contact',
+        required=False)
+
+
 class GitlabConfig(models.Model):
     _name = "gitlab.system.config"
 
     name = fields.Char()
     secret_token = fields.Char(
         string='Secret_token',
+        required=False)
+    api_url = fields.Char(
+        string='Api_url',
         required=False)
 
 
