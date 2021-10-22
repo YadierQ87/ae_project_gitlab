@@ -5,6 +5,20 @@ import requests as requests
 from odoo import fields, models
 
 
+class GitlabGroup(models.Model):
+    _name = "gitlab.group.profile"
+    _description = "Gitlab Group Profile Copy"
+
+    name = fields.Char("Title")
+    git_id = fields.Char()  # Example id: 1386105
+    web_url = fields.Char()
+    path = fields.Char()
+    description = fields.Char()
+    visibility = fields.Char()
+    avatar_url = fields.Char()
+    # GET /groups/:id/projects
+
+
 class GitlabProject(models.Model):
     _name = "gitlab.project.profile"
     _description = "Gitlab Project Profile Copy"
