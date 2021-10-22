@@ -1,5 +1,6 @@
 # License LGPLv3.0 or later (https://www.gnu.org/licenses/lgpl-3.0.en.html).
 import json
+from datetime import datetime
 
 import requests as requests
 from odoo import fields, models, api
@@ -44,6 +45,10 @@ class GitlabGroup(models.Model):
     description = fields.Char()
     visibility = fields.Char()
     avatar_url = fields.Char()
+
+    def action_sync_project_gitlab(self):
+        # todo sync from gitlab
+        pass
 
     # GET /groups/:id/
     @staticmethod
@@ -98,6 +103,10 @@ class GitlabProject(models.Model):
     path_with_namespace = fields.Char()
     description = fields.Char()
 
+    def action_sync_project_gitlab(self):
+        # todo sync from gitlab
+        pass
+
     @staticmethod
     def _create_issues_from_list(self, issues: list):
         task = self.env['project.task']
@@ -112,11 +121,14 @@ class GitlabProject(models.Model):
                              'labels': issue['labels'],
                              'issue_type': issue['issue_type'],
                              'confidential': issue['confidential'],
+                             'date_deadline': issue['due_date'],
                              'milestone': issue['milestone'],
                              'weight': issue['weight'],
                              'task_status': issue['task_status'],
                              'human_time_estimate': issue['human_time_estimate'],
                              'human_total_time_spent': issue['human_total_time_spent'],
+                             'is_sync': True,
+                             'sync_last_date': datetime.now()
                              })
         return False
 
@@ -137,16 +149,6 @@ class GitlabProject(models.Model):
             if isinstance(issues, list):
                 self._create_issues_from_list(issues)
         return False
-
-
-class GitlabSyncProjects(models.Model):
-    _name = "gitlab.sync.user.issues"
-    _description = "Gitlab Sync Data for Issues"
-
-    # this class was created in order to check the issues that has been sync
-    name = fields.Char(
-        string='Name',
-        required=False)
 
 
 class GitlabUser(models.Model):
