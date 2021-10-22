@@ -32,7 +32,7 @@ class TaskProjects(models.Model):
     # title = > name in Odoo
     # description = > description in Odoo
     state = fields.Selection(
-        string='',
+        string='State',
         selection=[('opened', 'opened'),
                    ('closed', 'closed'), ],
         required=False, )
@@ -45,5 +45,12 @@ class TaskProjects(models.Model):
                    ('incident', 'incident'),
                    ('test_case', 'test_case'), ],
         required=False, )
-    labels = fields.Char()
+    labels = fields.Html()
     milestone = fields.Char()
+    weight = fields.Char()
+    has_tasks = fields.Boolean(
+        string='Has_tasks',
+        required=False)
+    task_status = fields.Char()
+    human_time_estimate = fields.Char()
+    human_total_time_spent = fields.Char()

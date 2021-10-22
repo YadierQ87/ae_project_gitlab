@@ -5,6 +5,14 @@ import requests as requests
 from odoo import fields, models
 
 
+class GitlabProject(models.Model):
+    _name = "gitlab.project.profile"
+    _description = "Gitlab Project Profile Copy"
+
+    git_id = fields.Char()
+    name = fields.Char("Title")
+
+
 class GitlabUser(models.Model):
     _name = "gitlab.user.profile"
     _description = "Gitlab User Profile Copy"
