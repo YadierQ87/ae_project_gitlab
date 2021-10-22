@@ -37,22 +37,29 @@ class GitlabGroup(models.Model):
     _name = "gitlab.group.profile"
     _description = "Gitlab Group Profile Copy"
 
-    name = fields.Char("Title")
-    git_name = fields.Char("Name in Gitlab")
+    name = fields.Char(string="Title", readonly=True)
+    git_name = fields.Char(string="Name in Gitlab", readonly=True)
     git_id = fields.Char(required=True)  # Example id: 1386105
-    web_url = fields.Char()
-    path = fields.Char()
-    description = fields.Char()
-    visibility = fields.Char()
-    avatar_url = fields.Char()
+    web_url = fields.Char(readonly=True)
+    path = fields.Char(readonly=True)
+    description = fields.Char(readonly=True)
+    visibility = fields.Char(readonly=True)
+    avatar_url = fields.Char(readonly=True)
+    sync_last_date = fields.Datetime()
+    project_git_ids = fields.One2many(
+        comodel_name='gitlab.project.profile',
+        inverse_name='group_git_id',
+        string="Gitlab Projects",
+        required=False)
 
-    def action_sync_project_gitlab(self):
-        # todo sync from gitlab
-        pass
+    _sql_constraints = [
+        ('group_gitlab_name_unique',
+         'UNIQUE (git_name, git_id)',
+         'ID in gitlab must be unique!')]
 
     # GET /groups/:id/
     @staticmethod
-    def get_info_by_group(group_id=""):
+    def _get_info_by_group(group_id=""):
         if isinstance(group_id, str) and group_id != "":
             url_group = f'{_BASE_URL}groups/{group_id}'
             info_group = connection.get_response_url(url_group)
@@ -61,8 +68,52 @@ class GitlabGroup(models.Model):
         return False
 
     @api.model
+    def action_sync_group_gitlab(self):
+        group_gitlab = self._get_info_by_group(self.git_id)
+        if group_gitlab:
+            # the_group = self.env["gitlab.group.profile"].search([('git_id', 'like', self.git_id)])
+            self.write(
+                {'name': group_gitlab["name"],
+                 'git_id': group_gitlab["git_id"],
+                 'description': group_gitlab["description"],
+                 'name_with_namespace': group_gitlab["name_with_namespace"],
+                 'ssh_url_to_repo': group_gitlab["ssh_url_to_repo"],
+                 'http_url_to_repo': group_gitlab["http_url_to_repo"],
+                 'web_url': group_gitlab["web_url"],
+                 'readme_url': group_gitlab["readme_url"],
+                 'path': group_gitlab["path"],
+                 'sync_last_date': datetime.now(),
+                 'path_with_namespace': group_gitlab["path_with_namespace"], }
+            )
+
+    def find_and_replace(self):
+        pass
+
+    def action_sync_project_list(self):
+        info_group = self._get_info_by_group(self.git_id)
+        projects = info_group["projects"]
+        if len(projects) > 0:  # if the group has projects
+            Project = self.env["gitlab.project.profile"]
+            for proj in projects:
+                self.find_and_replace(proj["git_id"])
+                project_git = Project.create(
+                    {'name': proj["name"],
+                     'git_id': proj["git_id"],
+                     'description': proj["description"],
+                     'name_with_namespace': proj["name_with_namespace"],
+                     'ssh_url_to_repo': proj["ssh_url_to_repo"],
+                     'http_url_to_repo': proj["http_url_to_repo"],
+                     'web_url': proj["web_url"],
+                     'readme_url': proj["readme_url"],
+                     'path': proj["path"],
+                     'group_git_id': self.id,
+                     'path_with_namespace': proj["path_with_namespace"], }
+                )
+                self.project_git_ids |= project_git
+
+    @api.model
     def create(self, values):
-        info_group = self.get_info_by_group(values.get('git_id'))
+        info_group = self._get_info_by_group(values.get('git_id'))
         if isinstance(info_group, dict):  # if the group id exist in gitlab
             values['git_name'] = info_group['git_name']
             values['web_url'] = info_group['web_url']
@@ -71,9 +122,9 @@ class GitlabGroup(models.Model):
             values['visibility'] = info_group['visibility']
             values['avatar_url'] = info_group['avatar_url']
             if len(info_group["projects"]) > 0:  # if the group has projects
-                project = self.env["gitlab.project.profile"]
+                Project = self.env["gitlab.project.profile"]
                 for proj in info_group["projects"]:
-                    project.create(
+                    project_git = Project.create(
                         {'name': proj["name"],
                          'git_id': proj["git_id"],
                          'description': proj["description"],
@@ -83,8 +134,10 @@ class GitlabGroup(models.Model):
                          'web_url': proj["web_url"],
                          'readme_url': proj["readme_url"],
                          'path': proj["path"],
+                         'group_git_id': self.id,
                          'path_with_namespace': proj["path_with_namespace"], }
                     )
+                    self.project_git_ids |= project_git
         return super(GitlabGroup, self).create(values)
 
 
@@ -93,6 +146,7 @@ class GitlabProject(models.Model):
     _description = "Gitlab Project Profile Copy"
 
     name = fields.Char("Title")
+    group_git_id = fields.Many2one('gitlab.group.profile')
     git_id = fields.Char()  # Example id: 19264544
     ssh_url_to_repo = fields.Char()
     http_url_to_repo = fields.Char()
