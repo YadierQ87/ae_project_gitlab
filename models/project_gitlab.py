@@ -139,6 +139,16 @@ class GitlabProject(models.Model):
         return False
 
 
+class GitlabSyncProjects(models.Model):
+    _name = "gitlab.sync.user.issues"
+    _description = "Gitlab Sync Data for Issues"
+
+    # this class was created in order to check the issues that has been sync
+    name = fields.Char(
+        string='Name',
+        required=False)
+
+
 class GitlabUser(models.Model):
     _name = "gitlab.user.profile"
     _description = "Gitlab User Profile Copy"
