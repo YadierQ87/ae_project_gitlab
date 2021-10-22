@@ -9,8 +9,8 @@ class GitlabProject(models.Model):
     _name = "gitlab.project.profile"
     _description = "Gitlab Project Profile Copy"
 
-    git_id = fields.Char()  # Example id: 19264544
     name = fields.Char("Title")
+    git_id = fields.Char()  # Example id: 19264544
     ssh_url_to_repo = fields.Char()
     http_url_to_repo = fields.Char()
     web_url = fields.Char()
