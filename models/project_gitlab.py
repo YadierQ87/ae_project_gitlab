@@ -86,30 +86,42 @@ class GitlabGroup(models.Model):
                  'path_with_namespace': group_gitlab["path_with_namespace"], }
             )
 
-    def find_and_replace(self):
-        pass
+    def create_or_update_project(self, obj_sync):
+        Project = self.env["gitlab.project.profile"]
+        for proj_git in self.project_git_ids:
+            if obj_sync["git_id"] == proj_git.git_id:
+                proj_git.name = obj_sync["name"]
+                proj_git.git_id = obj_sync["git_id"]
+                proj_git.description = obj_sync["description"]
+                proj_git.name_with_namespace = obj_sync["name_with_namespace"]
+                proj_git.ssh_url_to_repo = obj_sync["ssh_url_to_repo"]
+                proj_git.http_url_to_repo = obj_sync["http_url_to_repo"]
+                proj_git.web_url = obj_sync["web_url"]
+                proj_git.readme_url = obj_sync["readme_url"]
+                proj_git.path = obj_sync["path"]
+                proj_git.path_with_namespace = obj_sync["path_with_namespace"]
+            else:
+                project_git = Project.create(
+                    {'name': obj_sync["name"],
+                     'git_id': obj_sync["git_id"],
+                     'description': obj_sync["description"],
+                     'name_with_namespace': obj_sync["name_with_namespace"],
+                     'ssh_url_to_repo': obj_sync["ssh_url_to_repo"],
+                     'http_url_to_repo': obj_sync["http_url_to_repo"],
+                     'web_url': obj_sync["web_url"],
+                     'readme_url': obj_sync["readme_url"],
+                     'path': obj_sync["path"],
+                     'group_git_id': self.id,
+                     'path_with_namespace': obj_sync["path_with_namespace"], }
+                )
+                self.project_git_ids |= project_git
 
     def action_sync_project_list(self):
         info_group = self._get_info_by_group(self.git_id)
-        projects = info_group["projects"]
-        if len(projects) > 0:  # if the group has projects
-            Project = self.env["gitlab.project.profile"]
-            for proj in projects:
-                self.find_and_replace(proj["git_id"])
-                project_git = Project.create(
-                    {'name': proj["name"],
-                     'git_id': proj["git_id"],
-                     'description': proj["description"],
-                     'name_with_namespace': proj["name_with_namespace"],
-                     'ssh_url_to_repo': proj["ssh_url_to_repo"],
-                     'http_url_to_repo': proj["http_url_to_repo"],
-                     'web_url': proj["web_url"],
-                     'readme_url': proj["readme_url"],
-                     'path': proj["path"],
-                     'group_git_id': self.id,
-                     'path_with_namespace': proj["path_with_namespace"], }
-                )
-                self.project_git_ids |= project_git
+        sync_projects = info_group["projects"]
+        if len(sync_projects) > 0:  # if the group has projects
+            for obj_proj in sync_projects:
+                self.create_or_update_project(obj_proj)
 
     @api.model
     def create(self, values):
