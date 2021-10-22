@@ -4,8 +4,9 @@ from odoo import fields, models
 class Project(models.Model):
     _inherit = 'project.project'
 
-    project_gitlab = fields.Char(
-        string='Project-Id in gitlab',
+    project_gitlab_id = fields.Many2one(
+        comodel_name='gitlab.project.profile',
+        string='Project in Gitlab',
         required=False)
 
 
