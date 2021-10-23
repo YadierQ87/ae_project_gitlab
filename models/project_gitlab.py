@@ -73,17 +73,19 @@ class GitlabGroup(models.Model):
         if group_gitlab:
             # the_group = self.env["gitlab.group.profile"].search([('git_id', 'like', self.git_id)])
             self.write(
-                {'name': group_gitlab["name"],
-                 'git_id': group_gitlab["git_id"],
-                 'description': group_gitlab["description"],
-                 'name_with_namespace': group_gitlab["name_with_namespace"],
-                 'ssh_url_to_repo': group_gitlab["ssh_url_to_repo"],
-                 'http_url_to_repo': group_gitlab["http_url_to_repo"],
-                 'web_url': group_gitlab["web_url"],
-                 'readme_url': group_gitlab["readme_url"],
-                 'path': group_gitlab["path"],
-                 'sync_last_date': datetime.now(),
-                 'path_with_namespace': group_gitlab["path_with_namespace"], }
+                {
+                    'name': group_gitlab["name"],
+                    'git_id': group_gitlab["git_id"],
+                    'description': group_gitlab["description"],
+                    'name_with_namespace': group_gitlab["name_with_namespace"],
+                    'ssh_url_to_repo': group_gitlab["ssh_url_to_repo"],
+                    'http_url_to_repo': group_gitlab["http_url_to_repo"],
+                    'web_url': group_gitlab["web_url"],
+                    'readme_url': group_gitlab["readme_url"],
+                    'path': group_gitlab["path"],
+                    'sync_last_date': datetime.now(),
+                    'path_with_namespace': group_gitlab["path_with_namespace"],
+                }
             )
 
     def create_or_update_project(self, obj_sync):
