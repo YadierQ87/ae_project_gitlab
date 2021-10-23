@@ -277,6 +277,16 @@ class GitlabUser(models.Model):
         comodel_name='res.users',
         string='Contact', )
 
+    # GET /projects/:id/issues?username=Quesada87
+    @staticmethod
+    def _get_issues_by_username(project_id="", username=""):
+        if isinstance(project_id, str) and project_id != "":
+            url_user = f'{_BASE_URL}projects/{project_id}issues?username={username}'
+            info_issues = connection.get_response_url(url_user)
+            if isinstance(info_issues, dict):
+                return info_issues
+        return False
+
 
 class GitlabConfig(models.Model):
     _name = "gitlab.system.config"

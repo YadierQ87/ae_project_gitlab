@@ -69,13 +69,14 @@ class TestGitlabConnection(TransactionCase):
 		self.assertTrue(self.test_aleph.action_sync_group_gitlab())
 
 	def test_get_project_list(self):
-		self.assertIsInstance(self.test_group.project_git_ids(), dict)
+		self.assertEqual(self.test_group.project_git_ids(), False)
+		self.assertIsInstance(self.test_aleph.project_git_ids(), dict)
 		self.assertIsInstance(self.test_aleph.project_git_ids(), list)
 
 	def test_get_project_issues(self):
-		self.assertEqual(self.connection.get_project_issues(""), False)
-		self.assertEqual(self.connection.get_project_issues("TR79342"), False)
-		self.assertIsInstance(self.connection.get_project_issues("19264544"), list)
+		self.assertIsInstance(self.test_project_true._get_issues_by_project, list)
+		self.assertIsInstance(self.test_project_true._get_issues_by_project, dict)
+		self.assertEqual(self.test_project_false._get_issues_by_project, False)
 
 	def test_get_issues_by_username(self):
 		self.assertEqual(self.connection.get_issues_by_username("", ""), False)
