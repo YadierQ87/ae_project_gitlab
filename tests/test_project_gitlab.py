@@ -10,10 +10,21 @@ from odoo.tests.common import TransactionCase
 # username:Quesada87     Yadier Abel
 
 
+class SampleTest(TransactionCase):
+	def setUp(self):
+		super(SampleTest, self).setUp()
+		# Add test setup code here
+		self._record = self.env['model.a'].create({'field': 'value'})
+
+	def test_fsm_operations(self):
+		# Add test code
+		self.assertEqual(self._record.field, value, msg="Value  changed !")
+
+
 class TestGitlabConnection(TransactionCase):
 
-	def __init__(self, *args, **kwargs):
-		super(TestGitlabConnection, self).__init__(*args, **kwargs)
+	def setUp(self, *args, **kwargs):
+		super(TestGitlabConnection, self).setUp(*args, **kwargs)
 		self.connection = GitlabConnection()
 		self.test_url = "https://gitlab.com/api/v4/projects/"
 

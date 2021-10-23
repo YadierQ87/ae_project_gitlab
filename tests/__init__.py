@@ -1,1 +1,1 @@
-from . import test_ae_project_gitlab
+from . import test_project_gitlab
