@@ -189,19 +189,29 @@ class GitlabProject(models.Model):
 
     # GET /projects/:id/
     @staticmethod
-    def _get_info_by_group(group_id=""):
-        if isinstance(group_id, str) and group_id != "":
-            url_group = f'{_BASE_URL}groups/{group_id}'
-            info_group = connection.get_response_url(url_group)
-            if isinstance(info_group, dict):
-                return info_group
+    def _get_info_by_project(project_id=""):
+        if isinstance(project_id, str) and project_id != "":
+            url_project = f'{_BASE_URL}projects/{project_id}'
+            info_project = connection.get_response_url(url_project)
+            if isinstance(info_project, dict):
+                return info_project
         return False
 
     @api.model
     def create(self, values):
-        info_group = self._get_info_by_group(values.get('git_id'))
-        if isinstance(info_group, dict):
-            pass
+        info_project = self._get_info_by_project(values.get('git_id'))
+        if isinstance(info_project, dict):
+            values['name'] = info_project['title']
+            values['git_id'] = info_project['iid']
+            values['ssh_url_to_repo'] = info_project['ssh_url_to_repo']
+            values['http_url_to_repo'] = info_project['http_url_to_repo']
+            values['web_url'] = info_project['web_url']
+            values['readme_url'] = info_project['readme_url']
+            values['name_with_namespace'] = info_project['name_with_namespace']
+            values['path'] = info_project['path']
+            values['path_with_namespace'] = info_project['path_with_namespace']
+            values['sync_last_date'] = datetime.now()
+        return super(GitlabProject, self).create(values)
 
     def create_or_update_issue(self, obj_sync):
         TaskIssue = self.env["project.task"]
