@@ -139,19 +139,20 @@ class GitlabGroup(models.Model):
                 Project = self.env["gitlab.project.profile"]
                 for proj in info_group["projects"]:
                     project_git = Project.create(
-                        {'name': proj["name"],
-                         'git_id': proj["git_id"],
-                         'description': proj["description"],
-                         'name_with_namespace': proj["name_with_namespace"],
-                         'ssh_url_to_repo': proj["ssh_url_to_repo"],
-                         'http_url_to_repo': proj["http_url_to_repo"],
-                         'web_url': proj["web_url"],
-                         'readme_url': proj["readme_url"],
-                         'path': proj["path"],
-                         'group_git_id': self.id,
-                         'sync_last_date': datetime.now(),
-                         'path_with_namespace': proj["path_with_namespace"],
-                         }
+                        {
+                            'name': proj["name"],
+                            'git_id': proj["git_id"],
+                            'description': proj["description"],
+                            'name_with_namespace': proj["name_with_namespace"],
+                            'ssh_url_to_repo': proj["ssh_url_to_repo"],
+                            'http_url_to_repo': proj["http_url_to_repo"],
+                            'web_url': proj["web_url"],
+                            'readme_url': proj["readme_url"],
+                            'path': proj["path"],
+                            'group_git_id': self.id,
+                            'sync_last_date': datetime.now(),
+                            'path_with_namespace': proj["path_with_namespace"],
+                        }
                     )
                     self.project_git_ids |= project_git
         return super(GitlabGroup, self).create(values)
@@ -191,32 +192,38 @@ class GitlabProject(models.Model):
                 task.name = obj_sync["name"]
                 task.git_id = obj_sync["git_id"]
                 task.description = obj_sync["description"]
-                task.name_with_namespace = obj_sync["name_with_namespace"]
-                task.ssh_url_to_repo = obj_sync["ssh_url_to_repo"]
-                task.http_url_to_repo = obj_sync["http_url_to_repo"]
-                task.web_url = obj_sync["web_url"]
-                task.readme_url = obj_sync["readme_url"]
-                task.path = obj_sync["path"]
-                task.path_with_namespace = obj_sync["path_with_namespace"]
+                task.iid_gitlab = obj_sync["iid_gitlab"]
+                task.state = obj_sync["state"]
+                task.confidential = obj_sync["confidential"]
+                task.issue_type = obj_sync["issue_type"]
+                task.labels = obj_sync["labels"]
+                task.milestone = obj_sync["milestone"]
+                task.weight = obj_sync["weight"]
+                task.has_tasks = obj_sync["has_tasks"]
+                task.task_status = obj_sync["task_status"]
+                task.human_time_estimate = obj_sync["human_time_estimate"]
+                task.human_total_time_spent = obj_sync["human_total_time_spent"]
             else:
                 task = TaskIssue.create(
-                    {'id_gitlab': issue['id'],
-                     'iid_gitlab': issue['iid'],
-                     'name': issue['title'],
-                     'description': issue['description'],
-                     'state': issue['state'],
-                     'labels': issue['labels'],
-                     'issue_type': issue['issue_type'],
-                     'confidential': issue['confidential'],
-                     'date_deadline': issue['due_date'],
-                     'milestone': issue['milestone'],
-                     'weight': issue['weight'],
-                     'task_status': issue['task_status'],
-                     'human_time_estimate': issue['human_time_estimate'],
-                     'human_total_time_spent': issue['human_total_time_spent'],
-                     'is_sync': True,
-                     'sync_last_date': datetime.now()
-                     }
+                    {
+                        'git_id': obj_sync['id'],
+                        'iid_gitlab': obj_sync['iid'],
+                        'project_git_id': obj_sync['project_id'],
+                        'name': obj_sync['title'],
+                        'description': obj_sync['description'],
+                        'state': obj_sync['state'],
+                        'confidential': obj_sync['confidential'],
+                        'issue_type': obj_sync['issue_type'],
+                        'labels': obj_sync['labels'],
+                        'milestone': obj_sync['milestone'],
+                        'weight': obj_sync['weight'],
+                        'has_tasks': obj_sync['has_tasks'],
+                        'task_status': obj_sync['task_status'],
+                        'human_time_estimate': obj_sync['human_time_estimate'],
+                        'human_total_time_spent': obj_sync['human_total_time_spent'],
+                        'is_sync': True,
+                        'sync_last_date': datetime.now()
+                    }
                 )
                 Project.task_ids |= task
 
