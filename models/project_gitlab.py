@@ -229,7 +229,7 @@ class GitlabProject(models.Model):
 
     def action_sync_issues_list(self):
         sync_issues = self._get_issues_by_project()
-        if sync_issues and len(sync_issues) > 0:  # if the group has projects
+        if sync_issues and len(sync_issues) > 0:  # if the projects has issues
             for obj_sync in sync_issues:
                 self.create_or_update_issue(obj_sync)
 
