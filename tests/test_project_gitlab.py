@@ -86,7 +86,6 @@ class TestGitlabConnection(TransactionCase):
 		self.assertEqual(self.test_project_false._get_issues_by_project, False)
 
 	def test_get_issues_by_username(self):
-		self.assertEqual(self.test_user_true._get_issues_by_username("", ""), False)
-		self.assertEqual(self.test_user_true._get_issues_by_username("19264544", "Polo56"), False)
-		self.assertEqual(self.test_user_true._get_issues_by_username("19268020", "Quesada87"), False)
-		self.assertIsInstance(self.test_user_true._get_issues_by_username("19264544", "Quesada87"), list)
+		self.assertEqual(self.test_user_true._get_issues_by_username(""), False)
+		self.assertEqual(self.test_user_true._get_issues_by_username("19264544"), False)
+		self.assertIsInstance(self.test_user_true._get_issues_by_username("19264544"), list)
