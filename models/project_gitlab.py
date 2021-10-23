@@ -233,15 +233,6 @@ class GitlabProject(models.Model):
             for obj_sync in sync_issues:
                 self.create_or_update_issue(obj_sync)
 
-    # GET /projects/:id/issues?assignee_username=Quesada87  filter by name
-    def create_issues_by_username(self, username=""):
-        if self.git_id and username:
-            url_username = f'{_BASE_URL}projects/{self.git_id}/issues?assignee_username={username}'
-            issues = self.get_response_url(url_username)
-            if isinstance(issues, list):
-                self._create_issues_from_list(issues)
-        return False
-
 
 class GitlabUser(models.Model):
     _name = "gitlab.user.profile"
