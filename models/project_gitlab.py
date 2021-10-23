@@ -99,6 +99,7 @@ class GitlabGroup(models.Model):
                 proj_git.web_url = obj_sync["web_url"]
                 proj_git.readme_url = obj_sync["readme_url"]
                 proj_git.path = obj_sync["path"]
+                proj_git.sync_last_date = datetime.now()
                 proj_git.path_with_namespace = obj_sync["path_with_namespace"]
             else:
                 project_git = Project.create(
@@ -110,6 +111,7 @@ class GitlabGroup(models.Model):
                      'http_url_to_repo': obj_sync["http_url_to_repo"],
                      'web_url': obj_sync["web_url"],
                      'readme_url': obj_sync["readme_url"],
+                     'sync_last_date': datetime.now(),
                      'path': obj_sync["path"],
                      'group_git_id': self.id,
                      'path_with_namespace': obj_sync["path_with_namespace"], }
@@ -119,7 +121,7 @@ class GitlabGroup(models.Model):
     def action_sync_project_list(self):
         info_group = self._get_info_by_group(self.git_id)
         sync_projects = info_group["projects"]
-        if len(sync_projects) > 0:  # if the group has projects
+        if sync_projects and len(sync_projects) > 0:  # if the group has projects
             for obj_proj in sync_projects:
                 self.create_or_update_project(obj_proj)
 
@@ -147,7 +149,9 @@ class GitlabGroup(models.Model):
                          'readme_url': proj["readme_url"],
                          'path': proj["path"],
                          'group_git_id': self.id,
-                         'path_with_namespace': proj["path_with_namespace"], }
+                         'sync_last_date': datetime.now(),
+                         'path_with_namespace': proj["path_with_namespace"],
+                         }
                     )
                     self.project_git_ids |= project_git
         return super(GitlabGroup, self).create(values)
@@ -168,44 +172,59 @@ class GitlabProject(models.Model):
     path = fields.Char()
     path_with_namespace = fields.Char()
     description = fields.Char()
-
-    def action_sync_project_gitlab(self):
-        # todo sync from gitlab
-        pass
-
-    @staticmethod
-    def _create_issues_from_list(self, issues: list):
-        task = self.env['project.task']
-        if len(issues) > 0:
-            for issue in issues:
-                # todo left to add assignees_ids , author_id and project_git_id
-                task.create({'id_gitlab': issue['id'],
-                             'iid_gitlab': issue['iid'],
-                             'name': issue['title'],
-                             'description': issue['description'],
-                             'state': issue['state'],
-                             'labels': issue['labels'],
-                             'issue_type': issue['issue_type'],
-                             'confidential': issue['confidential'],
-                             'date_deadline': issue['due_date'],
-                             'milestone': issue['milestone'],
-                             'weight': issue['weight'],
-                             'task_status': issue['task_status'],
-                             'human_time_estimate': issue['human_time_estimate'],
-                             'human_total_time_spent': issue['human_total_time_spent'],
-                             'is_sync': True,
-                             'sync_last_date': datetime.now()
-                             })
-        return False
+    sync_last_date = fields.Datetime()
 
     # GET /projects/:id/issues
-    def create_issues_by_project(self):
+    def _get_issues_by_project(self):
         if self.git_id:
             url_proj = f'{_BASE_URL}projects/{self.git_id}/issues'
             issues = self.get_response_url(url_proj)
             if isinstance(issues, list):
-                self._create_issues_from_list(issues)
+                return issues
         return False
+
+    def create_or_update_issue(self, obj_sync):
+        TaskIssue = self.env["project.task"]
+        Project = self.env["project.project"].search([('project_gitlab_id', '=', self.id)])
+        for task in self.task_ids:
+            if obj_sync["git_id"] == task.git_id:
+                task.name = obj_sync["name"]
+                task.git_id = obj_sync["git_id"]
+                task.description = obj_sync["description"]
+                task.name_with_namespace = obj_sync["name_with_namespace"]
+                task.ssh_url_to_repo = obj_sync["ssh_url_to_repo"]
+                task.http_url_to_repo = obj_sync["http_url_to_repo"]
+                task.web_url = obj_sync["web_url"]
+                task.readme_url = obj_sync["readme_url"]
+                task.path = obj_sync["path"]
+                task.path_with_namespace = obj_sync["path_with_namespace"]
+            else:
+                task = TaskIssue.create(
+                    {'id_gitlab': issue['id'],
+                     'iid_gitlab': issue['iid'],
+                     'name': issue['title'],
+                     'description': issue['description'],
+                     'state': issue['state'],
+                     'labels': issue['labels'],
+                     'issue_type': issue['issue_type'],
+                     'confidential': issue['confidential'],
+                     'date_deadline': issue['due_date'],
+                     'milestone': issue['milestone'],
+                     'weight': issue['weight'],
+                     'task_status': issue['task_status'],
+                     'human_time_estimate': issue['human_time_estimate'],
+                     'human_total_time_spent': issue['human_total_time_spent'],
+                     'is_sync': True,
+                     'sync_last_date': datetime.now()
+                     }
+                )
+                Project.task_ids |= task
+
+    def action_sync_issues_list(self):
+        sync_issues = self._get_issues_by_project()
+        if sync_issues and len(sync_issues) > 0:  # if the group has projects
+            for obj_sync in sync_issues:
+                self.create_or_update_issue(obj_sync)
 
     # GET /projects/:id/issues?assignee_username=Quesada87  filter by name
     def create_issues_by_username(self, username=""):

@@ -20,7 +20,7 @@ class TaskProjects(models.Model):
 
     is_sync = fields.Boolean(default=False)  # change to True when it is sync with gitlab
     sync_last_date = fields.Datetime()  # it is compute when task sync with gitlab
-    id_gitlab = fields.Char(string='Issue-id in gitlab')
+    git_id = fields.Char(string='Issue-id in gitlab')
     iid_gitlab = fields.Char(string='Issue-iid in gitlab')
     _sql_constraints = [
         ('project_task_gitlab_unique',
@@ -56,7 +56,3 @@ class TaskProjects(models.Model):
     task_status = fields.Char()
     human_time_estimate = fields.Char()
     human_total_time_spent = fields.Char()
-
-    def action_sync_task_gitlab(self):
-        # todo sync from gitlab
-        pass
