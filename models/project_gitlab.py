@@ -168,14 +168,14 @@ class GitlabProject(models.Model):
     name = fields.Char("Title")
     group_git_id = fields.Many2one('gitlab.group.profile')
     git_id = fields.Char()  # Example id: 19264544
-    ssh_url_to_repo = fields.Char()
-    http_url_to_repo = fields.Char()
-    web_url = fields.Char()
-    readme_url = fields.Char()
-    name_with_namespace = fields.Char()
-    path = fields.Char()
-    path_with_namespace = fields.Char()
-    description = fields.Char()
+    ssh_url_to_repo = fields.Char(readonly=True)
+    http_url_to_repo = fields.Char(readonly=True)
+    web_url = fields.Char(readonly=True)
+    readme_url = fields.Char(readonly=True)
+    name_with_namespace = fields.Char(readonly=True)
+    path = fields.Char(readonly=True)
+    path_with_namespace = fields.Char(readonly=True)
+    description = fields.Char(readonly=True)
     sync_last_date = fields.Datetime()
 
     # GET /projects/:id/issues
