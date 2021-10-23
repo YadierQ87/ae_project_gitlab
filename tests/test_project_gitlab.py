@@ -1,4 +1,6 @@
 # coding: utf-8
+from datetime import datetime
+
 from models.project_gitlab import GitlabConnection
 from models.project_gitlab import GitlabGroup
 from models.project_gitlab import GitlabProject
@@ -21,6 +23,36 @@ class TestGitlabConnection(TransactionCase):
 
 	def setUp(self, *args, **kwargs):
 		super(TestGitlabConnection, self).setUp(*args, **kwargs)
+		self.test_group = self.env['gitlab.group.profile'].create(
+			{
+				'name': "Odoo new GROUP",
+				'git_id': 1245453,
+				'description': "testing description",
+				'sync_last_date': datetime.now(),
+			}
+		)
+		self.test_aleph = self.env['gitlab.group.profile'].create(
+			{
+				'name': "Aleph",
+				'git_id': 1386105,
+				'description': "filled description",
+				'sync_last_date': datetime.now(),
+			}
+		)
+		self.test_project_false = self.env['gitlab.project.profile'].create(
+			{
+				'name': "Project False",
+				'group_git_id': 7991569,
+				'git_id': "7878797",
+			}
+		)
+		self.test_project_true = self.env['gitlab.project.profile'].create(
+			{
+				'name': "Project odoo",
+				'group_git_id': "7991569",
+				'git_id': "19264544",
+			}
+		)
 
 	def test_get_response_url(self):
 		self.assertFalse(self.connection.get_response_url("blank_url"))
@@ -33,13 +65,12 @@ class TestGitlabConnection(TransactionCase):
 		self.assertIsInstance(group._get_info_by_group("1386105"), dict)
 
 	def test_action_sync_group_gitlab(self):
-		test_group = self.env['gitlab.group.profile'].create(
-			{
-				'name': 'Some Client Test',
-				'linkedin_account': 'https://linkedin.com/in/someClient-237872',
-			}
-		)
-		pass
+		self.assertFalse(self.test_group.action_sync_group_gitlab())
+		self.assertTrue(self.test_aleph.action_sync_group_gitlab())
+
+	def test_get_project_list(self):
+		self.assertIsInstance(self.test_group.project_git_ids(), dict)
+		self.assertIsInstance(self.test_aleph.project_git_ids(), list)
 
 	def test_get_project_issues(self):
 		self.assertEqual(self.connection.get_project_issues(""), False)

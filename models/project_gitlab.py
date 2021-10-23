@@ -72,7 +72,7 @@ class GitlabGroup(models.Model):
         group_gitlab = self._get_info_by_group(self.git_id)
         if group_gitlab:
             # the_group = self.env["gitlab.group.profile"].search([('git_id', 'like', self.git_id)])
-            self.write(
+            return self.write(
                 {
                     'name': group_gitlab["name"],
                     'git_id': group_gitlab["git_id"],
@@ -87,6 +87,7 @@ class GitlabGroup(models.Model):
                     'path_with_namespace': group_gitlab["path_with_namespace"],
                 }
             )
+        return False
 
     def create_or_update_project(self, obj_sync):
         Project = self.env["gitlab.project.profile"]
@@ -185,6 +186,22 @@ class GitlabProject(models.Model):
             if isinstance(issues, list):
                 return issues
         return False
+
+    # GET /projects/:id/
+    @staticmethod
+    def _get_info_by_group(group_id=""):
+        if isinstance(group_id, str) and group_id != "":
+            url_group = f'{_BASE_URL}groups/{group_id}'
+            info_group = connection.get_response_url(url_group)
+            if isinstance(info_group, dict):
+                return info_group
+        return False
+
+    @api.model
+    def create(self, values):
+        info_group = self._get_info_by_group(values.get('git_id'))
+        if isinstance(info_group, dict):
+            pass
 
     def create_or_update_issue(self, obj_sync):
         TaskIssue = self.env["project.task"]
