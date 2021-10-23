@@ -53,6 +53,13 @@ class TestGitlabConnection(TransactionCase):
 				'git_id': "19264544",
 			}
 		)
+		self.test_user_true = self.env['gitlab.user.profile'].create(
+			{
+				'name': "Yadier Abel",
+				'username': "Quesada87",
+				'git_id': "870716",
+			}
+		)
 
 	def test_get_response_url(self):
 		self.assertFalse(self.connection.get_response_url("blank_url"))
@@ -79,7 +86,7 @@ class TestGitlabConnection(TransactionCase):
 		self.assertEqual(self.test_project_false._get_issues_by_project, False)
 
 	def test_get_issues_by_username(self):
-		self.assertEqual(self.connection.get_issues_by_username("", ""), False)
-		self.assertEqual(self.connection.get_issues_by_username("19264544", "Polo56"), False)
-		self.assertEqual(self.connection.get_issues_by_username("19268020", "Quesada87"), False)
-		self.assertIsInstance(self.connection.get_issues_by_username("19264544", "Quesada87"), list)
+		self.assertEqual(self.test_user_true._get_issues_by_username("", ""), False)
+		self.assertEqual(self.test_user_true._get_issues_by_username("19264544", "Polo56"), False)
+		self.assertEqual(self.test_user_true._get_issues_by_username("19268020", "Quesada87"), False)
+		self.assertIsInstance(self.test_user_true._get_issues_by_username("19264544", "Quesada87"), list)
