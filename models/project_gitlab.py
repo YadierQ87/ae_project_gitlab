@@ -287,13 +287,25 @@ class GitlabUser(models.Model):
         return False
 
 
-class GitlabConfig(models.Model):
-    _name = "gitlab.system.config"
+# enable features in the res.config.settings [gitlab.system.config]
+class ResConfigSettings(models.TransientModel):
+    _inherit = 'res.config.settings'
 
-    name = fields.Char()
-    secret_token = fields.Char(
-        string='Secret_token',
-        required=False)
-    api_url = fields.Char(
-        string='Api_url',
-        required=False)
+    gitlab_secret_token = fields.Char(string='Gitlab Secret Token')
+    gitlab_api_url = fields.Char(string='Gitlab Base Api Url')
+
+    @api.multi
+    def set_values(self):
+        super(ResConfigSettings, self).set_values()
+        configuration = self.env['ir.config_parameter'].sudo()
+        configuration.set_param('ae_project_gitlab.gitlab_secret_token', self.gitlab_secret_token)
+        configuration.set_param('ae_project_gitlab.gitlab_api_url', self.gitlab_api_url)
+
+    @api.model
+    def get_values(self):
+        res = super(ResConfigSettings, self).get_values()
+        value_token = self.env['ir.config_parameter'].sudo().get_param('ae_project_gitlab.gitlab_secret_token')
+        value_url = self.env['ir.config_parameter'].sudo().get_param('ae_project_gitlab.gitlab_api_url')
+        res.update({'gitlab_secret_token': value_token})
+        res.update({'gitlab_api_url': value_url})
+        return res
