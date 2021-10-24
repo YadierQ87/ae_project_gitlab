@@ -11,8 +11,10 @@
     "installable": True,
     "depends": ["base", "project", "hr"],
     "data": [
-        "views/res_user_views.xml",
+        "security/ir.model.access.csv",
+        "security/security.xml",
         "views/project_gitlab_views.xml",
+        "views/res_user_views.xml",
     ],
     "demo": [],
 }
