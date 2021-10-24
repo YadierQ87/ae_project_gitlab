@@ -11,8 +11,8 @@
     "installable": True,
     "depends": ["base", "project", "hr"],
     "data": [
-        "views/crm_social_profile.xml",
-        "views/crm_customer_template.xml",
+        "views/res_user_views.xml",
+        "views/project_gitlab_views.xml",
     ],
     "demo": [],
 }

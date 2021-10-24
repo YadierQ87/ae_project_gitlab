@@ -4,42 +4,43 @@ from odoo import fields, models
 class Project(models.Model):
     _inherit = 'project.project'
 
+    create_in_gitlab = fields.Boolean(default=False)
     project_gitlab_id = fields.Many2one(
         comodel_name='gitlab.project.profile',
         string='Project in Gitlab',
         required=False)
+    is_sync = fields.Boolean(default=False)
+    sync_last_date = fields.Datetime()
+    gitlab_id = fields.Char(related='project_gitlab_id.git_id')
 
 
 # this is issue in Gitlab
 class TaskProjects(models.Model):
     _inherit = 'project.task'
 
-    issue_gitlab = fields.Char(
-        string='Issue-Id in gitlab',
-        required=False)
+    is_sync = fields.Boolean(default=False)  # change to True when it is sync with gitlab
+    sync_last_date = fields.Datetime()  # it is compute when task sync with gitlab
+    git_id = fields.Char(string='Issue-id in gitlab')
+    iid_gitlab = fields.Char(string='Issue-iid in gitlab')
+    _sql_constraints = [
+        ('project_task_gitlab_unique',
+         'UNIQUE (is_sync, id_gitlab, iid_gitlab)',
+         'id_gitlab must be unique!')]
     assignees_ids = fields.One2many(
         comodel_name='gitlab.user.profile',
-        string='Assignees',
-        required=False)
+        string='Assignees')
     author_id = fields.Many2one(
         comodel_name='gitlab.user.profile',
-        string='Author',
-        required=False)
-    gitlab_profile_id = fields.Many2one(
-        comodel_name='gitlab.user.profile',
-        string='Gitlab profile id',
-        required=False)
-    # project_id => project_id in Odoo
-    # title = > name in Odoo
-    # description = > description in Odoo
+        string='Author')
+    project_git_id = fields.Many2one(
+        comodel_name='gitlab.project.profile',
+        string='Project gitlab')
     state = fields.Selection(
         string='State',
         selection=[('opened', 'opened'),
                    ('closed', 'closed'), ],
         required=False, )
-    # created_at = > date_create in Odoo
     confidential = fields.Char()
-    # due_date = > date_deadline in Odoo
     issue_type = fields.Selection(
         string='Issue_type',
         selection=[('issue', 'issue'),
