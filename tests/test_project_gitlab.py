@@ -1,91 +1,93 @@
 # coding: utf-8
-from datetime import datetime
 
-from models.project_gitlab import GitlabConnection
-from models.project_gitlab import GitlabGroup
-from models.project_gitlab import GitlabProject
+import json
+import pkgutil
+
 from odoo.tests.common import TransactionCase
-
-# using TDD class For testing purposes
-# group-ID:1386105       aleph-engineering
-# group-ID:7991569       odoo-personalization
-# project-Id:19264544    odoo-aleph-ce-personalization
-# username:Quesada87     Yadier Abel
 
 _TEST_URL = "https://gitlab.com/api/v4/projects"
 
-connection = GitlabConnection()
-group = GitlabGroup()
-project = GitlabProject()
-
 
 class TestGitlabConnection(TransactionCase):
+    def setUp(self, *args, **kwargs):
+        super(TestGitlabConnection, self).setUp(*args, **kwargs)
+        git_config = self.env["res.config.settings"].sudo()
+        git_config.create({"gitlab_api_url": _TEST_URL})
+        git_config.set_values()
+        self.test_group = self.env["gitlab.group.profile"].create(
+            {
+                "name": "Odoo Business Unit",
+                "git_id": 788100,
+                "description": "Description About the Group",
+                "visibility": "private",
+            }
+        )
+        self.test_project = self.env["project.project"].create(
+            {
+                "name": "Odoo Ce Project",
+                "git_id": False,
+                "description": "Project for Odoo",
+            }
+        )
+        self.test_user = self.env["res.users"].sudo().search([], limit=1)
+        self.test_issue = self.env["project.task"].create(
+            {
+                "name": "New testing issue",
+                "project_id": self.test_project.id,
+                "git_id": "909",
+            }
+        )
 
-	def setUp(self, *args, **kwargs):
-		super(TestGitlabConnection, self).setUp(*args, **kwargs)
-		self.test_group = self.env['gitlab.group.profile'].create(
-			{
-				'name': "Odoo new GROUP",
-				'git_id': 1245453,
-				'description': "testing description",
-				'sync_last_date': datetime.now(),
-			}
-		)
-		self.test_aleph = self.env['gitlab.group.profile'].create(
-			{
-				'name': "Aleph",
-				'git_id': 1386105,
-				'description': "filled description",
-				'sync_last_date': datetime.now(),
-			}
-		)
-		self.test_project_false = self.env['gitlab.project.profile'].create(
-			{
-				'name': "Project False",
-				'group_git_id': 7991569,
-				'git_id': "7878797",
-			}
-		)
-		self.test_project_true = self.env['gitlab.project.profile'].create(
-			{
-				'name': "Project odoo",
-				'group_git_id': "7991569",
-				'git_id': "19264544",
-			}
-		)
-		self.test_user_true = self.env['gitlab.user.profile'].create(
-			{
-				'name': "Yadier Abel",
-				'username': "Quesada87",
-				'git_id': "870716",
-			}
-		)
+    # testing information group in demo data json
+    def test_get_info_by_group(self):
+        group = json.loads(
+            pkgutil.get_data(self.__module__, "group_response.json").decode("utf-8")
+        )
+        self.assertIsInstance(group, dict)
+        self.assertNotEqual(group["description"], self.test_group.description)
+        self.test_group.update(
+            {"description": "Description About the Group v2", "git_id": 185}
+        )
+        self.test_group.make_sync_data(group)  # call sync using json info
+        self.assertEqual(group["description"], self.test_group.description)
+        self.assertEqual(str(group["id"]), self.test_group.git_id)
+        self.assertEqual(self.test_group.name, "Odoo TESTING Unit")
 
-	def test_get_response_url(self):
-		self.assertFalse(self.connection.get_response_url("blank_url"))
-		self.assertFalse(self.connection.get_response_url(""))
-		self.assertIsInstance(self.connection.get_response_url(_TEST_URL), list)
+    # testing information project in demo data json
+    def test_get_info_by_project(self):
+        project = json.loads(
+            pkgutil.get_data(self.__module__, "project_response.json").decode("utf-8")
+        )
+        self.assertIsInstance(project, dict)
+        self.assertFalse(self.test_project._get_issues_by_project())
+        self.assertEqual(project["name"], self.test_project.name)
+        self.assertNotEqual(project["description"], self.test_project.description)
+        self.test_project.update({"description": "Project for Odoo Gitlab v2"})
+        self.assertEqual(project["description"], self.test_project.description)
+        self.test_project.make_sync_project(project)  # sync data from json
+        self.assertEqual(self.test_project.name, "Odoo Ce Project")
 
-	def test_get_info_by_group(self):
-		self.assertEqual(group._get_info_by_group(""), False)
-		self.assertEqual(group._get_info_by_group("25488"), False)
-		self.assertIsInstance(group._get_info_by_group("1386105"), dict)
+    # testing information user in demo data json
+    def test_get_info_by_user(self):
+        user = json.loads(
+            pkgutil.get_data(self.__module__, "user_response.json").decode("utf-8")
+        )
+        self.assertIsInstance(user, list)
+        self.test_user.make_sync_user(user)
+        self.assertEqual(self.test_user.username, user[0]["username"])
+        self.assertEqual(self.test_user.state_git, "active")
 
-	def test_action_sync_group_gitlab(self):
-		self.assertFalse(self.test_group.action_sync_group_gitlab())
-		self.assertTrue(self.test_aleph.action_sync_group_gitlab())
+    #  testing info issues in demo data json
+    def test_get_project_issues(self):
+        """testing a list of issues"""
 
-	def test_get_project_list(self):
-		self.assertEqual(self.test_group.project_git_ids(), False)
-		self.assertIsInstance(self.test_aleph.project_git_ids(), dict)
-		self.assertIsInstance(self.test_aleph.project_git_ids(), list)
-
-	def test_get_project_issues(self):
-		self.assertIsInstance(self.test_project_true._get_issues_by_project, list)
-		self.assertIsInstance(self.test_project_true._get_issues_by_project, dict)
-		self.assertEqual(self.test_project_false._get_issues_by_project, False)
-
-	def test_get_issues_by_username(self):
-		self.assertEqual(self.test_user_true._get_issues_by_username(""), False)
-		self.assertEqual(self.test_user_true._get_issues_by_username("19264544"), False)
-		self.assertIsInstance(self.test_user_true._get_issues_by_username("19264544"), list)
+        issues = json.loads(
+            pkgutil.get_data(self.__module__, "issues_response.json").decode("utf-8")
+        )
+        self.assertEqual(self.test_issue.name, "New testing issue")
+        self.test_project.update({"git_id": 101})
+        self.test_project.make_sync_issues(issues)
+        for issue in self.test_project.task_ids:
+            self.assertNotEqual(issue.name, False)
+            self.assertEqual(issue.state, "opened")
+            self.assertEqual(issue.project_id.git_id, self.test_project.git_id)

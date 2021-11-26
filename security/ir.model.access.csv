@@ -1,5 +1,2 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_gitlab_group_profile,gitlab.group.profile,model_gitlab_group_profile,,1,1,1,1
-access_gitlab_project_profile,gitlab.project.profile,model_gitlab_project_profile,,1,1,1,1
-access_gitlab_user_profile,gitlab.user.profile,model_gitlab_user_profile,,1,1,1,1
-access_gitlab_system_config,gitlab.system.config,model_gitlab_system_config,,1,1,1,1

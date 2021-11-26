@@ -2,19 +2,26 @@
 {
     "name": "Gitlab Integration with odoo project",
     "summary": """
-        This module allows user seen their issues and projects from gitlab with simple configuration""",
+        Uses the gitlab api and a simple setup to sync your project data in Gitlab with Odoo Project.
+        """,
+    "description": """Get the real information about your organization, registered users and groups with your 
+    projects and list of related issues""",
     "version": "1.0.0",
     "license": "AGPL-3",
-    "author": "Yadier Abel De Quesada, Solprob",
-    "website": "https://solprob.nat.cu",
+    "author": "Yadier Abel De Quesada",
     "application": False,
     "installable": True,
-    "depends": ["base", "project", "hr"],
+    "depends": [
+        "base",
+        "project",
+    ],
     "data": [
         "security/ir.model.access.csv",
-        "security/security.xml",
-        "views/project_gitlab_views.xml",
+        "views/project_gitgroup_views.xml",
+        "views/project_task_views.xml",
+        "views/project_project_views.xml",
         "views/res_user_views.xml",
+        "views/res_config_view.xml",
     ],
-    "demo": [],
+    "demo": ["data/user.xml"],
 }
